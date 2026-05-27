@@ -1,17 +1,18 @@
 import bpy
 
 #ブレンダーに登録するアドオン情報
-bl_info={
-"neme":"レベルエディタ",
-"author":"satou yui",
-"version":(1,0),
-"blender":(3,3,1),
-"location":"",
-"description":"レベルエディタ",
-"warning":"",
-"wiki_url":"",
-"tracker_url":"",
-"category":"Object"
+bl_info={  
+    "name":"レベルエディタ",
+    "author": "Haruto Tanaka",
+    "version": (1,0),
+    "blender": (3, 3, 1),
+    "location": "",
+    "description": "レベルエディタ",
+    "warning":"",
+    "support": "TESTING",
+    "wiki_url":"",
+    "tracker_url":"",
+    "category":"Object"
 }
 
 #アドオン有効化時コールバック
