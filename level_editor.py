@@ -17,13 +17,6 @@ bl_info={
 }
 
 
-#アドオン有効化時コールバック
-def register():
-    print("レベルエディタが有効化されました")
-
-#アドオン無効化時コールバック
-def unregister():
-    print("レベルエディタが無効化されました")
     
     # メニュー項目描画
 def draw_menu_manual(self, context):
