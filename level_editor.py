@@ -1,4 +1,6 @@
 import bpy
+import math
+
 
 #ブレンダーに登録するアドオン情報
 bl_info={
@@ -71,8 +73,12 @@ class TOPBAR_MT_my_menu(bpy.types.Menu):
                      text=MYADDON_OT_stretch_vertex.bl_label)
                      
              self.layout.operator(
-                    MYADDON_OT_create_ico_sphere.bl_idname,
+                     MYADDON_OT_create_ico_sphere.bl_idname,
                       text=MYADDON_OT_create_ico_sphere.bl_label) 
+                      
+             self.layout.operator(
+                     MYADDON_OT_export_scene.bl_idname, 
+                       text=MYADDON_OT_export_scene.bl_label)
                       
     # 既存のメニューにサブメニューを追加
     def submenu(self, context):
@@ -112,10 +118,48 @@ class MYADDON_OT_create_ico_sphere(bpy.types.Operator):
 
         return {'FINISHED'}
 
+
+#オペレータ シーン出力
+class MYADDON_OT_export_scene(bpy.types.Operator):
+    bl_idname = "myaddon.myaddon_ot_export_scene"
+    bl_label = "シーン出力"
+    bl_description = "シーン情報をExportします"
+
+    def execute(self, context):
+
+        print("シーン情報をExportします")
+
+        for obj in bpy.context.scene.objects:
+
+            print(obj.type + " - " + obj.name)
+
+            trans, rot, scale = obj.matrix_local.decompose()
+
+            rot = rot.to_euler()
+
+            rot.x = math.degrees(rot.x)
+            rot.y = math.degrees(rot.y)
+            rot.z = math.degrees(rot.z)
+
+            print("Trans(%f,%f,%f)" % (trans.x, trans.y, trans.z))
+            print("Rot(%f,%f,%f)" % (rot.x, rot.y, rot.z))
+            print("Scale(%f,%f,%f)" % (scale.x, scale.y, scale.z))
+
+            if obj.parent:
+                print("Parent:" + obj.parent.name)
+
+            print()
+
+        print("シーン情報をExportしました")
+        self.report({'INFO'}, "シーン情報をExportしました")
+
+        return {'FINISHED'}
+
 # Blenderに登録するクラスリスト
 classes = (
     MYADDON_OT_stretch_vertex,
     MYADDON_OT_create_ico_sphere,
+    MYADDON_OT_export_scene,
     TOPBAR_MT_my_menu,
 )
 
