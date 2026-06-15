@@ -1,6 +1,6 @@
 import bpy
 import math
-
+import bpy_extras
 
 #ブレンダーに登録するアドオン情報
 bl_info={
@@ -112,41 +112,133 @@ class MYADDON_OT_create_ico_sphere(bpy.types.Operator):
         return {'FINISHED'}
 
 
+
 #オペレータ シーン出力
-class MYADDON_OT_export_scene(bpy.types.Operator):
+class MYADDON_OT_export_scene(
+        bpy.types.Operator,
+        bpy_extras.io_utils.ExportHelper):
+
     bl_idname = "myaddon.myaddon_ot_export_scene"
     bl_label = "シーン出力"
     bl_description = "シーン情報をExportします"
+
+    filename_ext = ".scene"
+
+    def write_and_print(self, file, string):
+        print(string)
+
+        file.write(string)
+        file.write('\n')
+
+    def parse_scene_recursive(self, file, object, level):
+        """シーン解析用再帰関数"""
+
+        # 深さ分インデント
+        indent = ""
+        for i in range(level):
+            indent += "\t"
+
+        # オブジェクト名出力
+        self.write_and_print(
+            file,
+            indent + object.type + " - " + object.name
+        )
+
+        # Transform取得
+        trans, rot, scale = object.matrix_local.decompose()
+
+        # Quaternion → Euler
+        rot = rot.to_euler()
+
+        # ラジアン → 度数法
+        rot.x = math.degrees(rot.x)
+        rot.y = math.degrees(rot.y)
+        rot.z = math.degrees(rot.z)
+
+        # Transform出力
+        self.write_and_print(
+            file,
+            indent + "Trans(%f,%f,%f)"
+            % (trans.x, trans.y, trans.z)
+        )
+
+        self.write_and_print(
+            file,
+            indent + "Rot(%f,%f,%f)"
+            % (rot.x, rot.y, rot.z)
+        )
+
+        self.write_and_print(
+            file,
+            indent + "Scale(%f,%f,%f)"
+            % (scale.x, scale.y, scale.z)
+        )
+
+        self.write_and_print(file, "")
+
+        # 子ノードへ進む
+        for child in object.children:
+            self.parse_scene_recursive(
+                file,
+                child,
+                level + 1
+            )
+
+    def export(self):
+
+        print("シーン情報出力開始... %r" % self.filepath)
+
+        with open(self.filepath, "wt", encoding="utf-8") as file:
+
+            self.write_and_print(file, "SCENE")
+
+            # シーン内の全オブジェクト
+            for object in bpy.context.scene.objects:
+
+                # 親を持つものはスキップ
+                if object.parent:
+                    continue
+
+                # ルートノードから再帰走査
+                self.parse_scene_recursive(
+                    file,
+                    object,
+                    0
+                )
 
     def execute(self, context):
 
         print("シーン情報をExportします")
 
-        for obj in bpy.context.scene.objects:
+        self.export()
 
-            print(obj.type + " - " + obj.name)
-
-            trans, rot, scale = obj.matrix_local.decompose()
-
-            rot = rot.to_euler()
-
-            rot.x = math.degrees(rot.x)
-            rot.y = math.degrees(rot.y)
-            rot.z = math.degrees(rot.z)
-
-            print("Trans(%f,%f,%f)" % (trans.x, trans.y, trans.z))
-            print("Rot(%f,%f,%f)" % (rot.x, rot.y, rot.z))
-            print("Scale(%f,%f,%f)" % (scale.x, scale.y, scale.z))
-
-            if obj.parent:
-                print("Parent:" + obj.parent.name)
-
-            print()
-
-        print("シーン情報をExportしました")
         self.report({'INFO'}, "シーン情報をExportしました")
+        print("シーン情報をExportしました")
 
         return {'FINISHED'}
+
+# シーン内の全オブジェクトについて
+for object in bpy.context.scene.objects:
+
+    print(object.type + " : " + object.name)
+
+    trans, rot, scale = object.matrix_local.decompose()
+
+    rot = rot.to_euler()
+
+    rot.x = math.degrees(rot.x)
+    rot.y = math.degrees(rot.y)
+    rot.z = math.degrees(rot.z)
+
+    print("Trans(%f,%f,%f)" % (trans.x, trans.y, trans.z))
+    print("Rot(%f,%f,%f)" % (rot.x, rot.y, rot.z))
+    print("Scale(%f,%f,%f)" % (scale.x, scale.y, scale.z))
+
+    if object.parent:
+        print("Parent:" + object.parent.name)
+
+    print()
+
 
 # Blenderに登録するクラスリスト
 classes = (
