@@ -111,9 +111,45 @@ class MYADDON_OT_create_ico_sphere(bpy.types.Operator):
 
         return {'FINISHED'}
 
+#パネル　ファイル名
+class OBJECT_PT_file_name(bpy.types.Panel):
+    """オブジェクトのファイルネームパネル"""
+    bl_idname = "OBJECT_PT_file_name"
+    bl_label = "FileName"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+
+    # サブメニューの描画
+    def draw(self, context):
+
+        #パネルに項目を追加
+        if "file_name" in context.object:
+            #既にプロパティがあれば、プロパティを表示
+            self.layout.prop(context.object, '["file_name"]', text=self.bl_label)
+        else:
+            #プロパティがなければ、プロパティ追加ボタンを表示
+            self.layout.operator(MYADDON_OT_add_filename.bl_idname)
 
 
-#オペレータ シーン出力
+#オペレータ カスタムプロパティ['file_name']追加
+class MYADDON_OT_add_filename(bpy.types.Operator):
+    bl_idname = "myaddon.myaddon_ot_add_filename"
+    bl_label = "FileName 追加"
+    bl_description = "['file_name']カスタムプロパティを追加します"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+
+        #['file_name']カスタムプロパティを追加
+        context.object["file_name"] = ""
+
+        return {"FINISHED"}
+
+
+
+
+# オペレータ シーン出力
 class MYADDON_OT_export_scene(
         bpy.types.Operator,
         bpy_extras.io_utils.ExportHelper):
@@ -138,10 +174,10 @@ class MYADDON_OT_export_scene(
         for i in range(level):
             indent += "\t"
 
-        # オブジェクト名出力
+        # オブジェクトタイプ出力
         self.write_and_print(
             file,
-            indent + object.type + " - " + object.name
+            indent + object.type
         )
 
         # Transform取得
@@ -158,23 +194,37 @@ class MYADDON_OT_export_scene(
         # Transform出力
         self.write_and_print(
             file,
-            indent + "Trans(%f,%f,%f)"
+            indent + "T %f %f %f"
             % (trans.x, trans.y, trans.z)
         )
 
         self.write_and_print(
             file,
-            indent + "Rot(%f,%f,%f)"
+            indent + "R %f %f %f"
             % (rot.x, rot.y, rot.z)
         )
 
         self.write_and_print(
             file,
-            indent + "Scale(%f,%f,%f)"
+            indent + "S %f %f %f"
             % (scale.x, scale.y, scale.z)
         )
 
-        self.write_and_print(file, "")
+        # カスタムプロパティ 'file_name'
+        if "file_name" in object:
+            self.write_and_print(
+                file,
+                indent + "N %s"
+                % object["file_name"]
+            )
+
+        # ノード終了
+        self.write_and_print(
+            file,
+            indent + 'END'
+        )
+
+        self.write_and_print(file, '')
 
         # 子ノードへ進む
         for child in object.children:
@@ -246,6 +296,9 @@ classes = (
     MYADDON_OT_create_ico_sphere,
     MYADDON_OT_export_scene,
     TOPBAR_MT_my_menu,
+    MYADDON_OT_add_filename,
+    OBJECT_PT_file_name,
+    
 )
 
 
